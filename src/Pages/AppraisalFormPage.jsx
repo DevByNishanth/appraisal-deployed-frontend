@@ -172,7 +172,7 @@ const AppraisalFormPage = () => {
         setServiceFinalMarks(response.data.serviceMarks);
         setTotalMarks(response.data.totalMarks);
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching data:", error.message);
       }
     };
     fetchData();
