@@ -14,6 +14,7 @@ const ResearchForm10 = () => {
   const [selectedCheck, setSelectedCheck] = useState("none");
   const [dropdown, setDropdown] = useState(false);
   const [files, setFiles] = useState([]);
+  const [deleteKeyword, setDeleteKeyword] = useState(null);
   const [mark, setMark] = useState(0);
   console.log("mark", mark);
   // const [selectedValue, setSelectedValue] = useState();
@@ -70,42 +71,37 @@ const ResearchForm10 = () => {
           },
         }
       );
-      console.log("Upload successful", response.data);
+      console.log("Upload successful:", response.data);
+      let url = response.data.files[0];
+      let fileDeleteKeyword = url.split("/").pop();
+      setDeleteKeyword(fileDeleteKeyword);
     } catch (err) {
       console.error("File upload failed:", err);
     }
   };
 
   const removeFile = async (index) => {
-    // const fileName = encodeURIComponent(files[index].name); // encode to handle spaces & special chars
-    const fileName = files[index].name;
-
     try {
-      // API call to delete image with fileName in URL
       await axios.delete(`${API}/api/deleteImage`, {
         headers: { Authorization: `Bearer ${token}` },
-        data: { keyword: "FundFiles" },
+        data: { keyword: deleteKeyword },
       });
 
-      // Revoke preview URL if exists
       if (files[index].preview) {
         URL.revokeObjectURL(files[index].preview);
       }
 
-      // Update state after successful deletion
       const updatedFiles = [...files];
       updatedFiles.splice(index, 1);
       setFiles(updatedFiles);
 
-      document.getElementById("file-upload").value = "";
-      // toast.success(`${decodeURIComponent(fileName)} deleted successfully`);
-      // toast.success(`${fileName} deleted successfully`);
+      toast.success("File deleted successfully");
     } catch (error) {
       console.error(
         "Error deleting file:",
         error.response?.data || error.message
       );
-      // toast.error("Failed to delete file");
+      toast.error("Failed to delete file");
     }
   };
 

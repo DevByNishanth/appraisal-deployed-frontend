@@ -3,6 +3,7 @@ import { ChevronDown, UploadCloud } from "lucide-react";
 import { Data } from "../../Context/Store";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
+import { toast } from "react-toastify";
 
 const ServiceForm4 = () => {
   const API = import.meta.env.VITE_API
@@ -25,6 +26,7 @@ const ServiceForm4 = () => {
   const [dropdown2, setDropdown2] = useState(false);
 
   const [files, setFiles] = useState([]);
+  const [deleteKeyword, setDeleteKeyword] = useState(null);
   const [mark, setMark] = useState(0);
 
   // === API Call ===
@@ -127,17 +129,19 @@ const ServiceForm4 = () => {
         }
       );
       console.log("Upload successful", response.data);
+      let url = response.data.files[0];
+      let fileDeleteKeyword = url.split("/").pop();
+      setDeleteKeyword(fileDeleteKeyword);
     } catch (err) {
       console.error("File upload failed:", err);
     }
   };
 
   const removeFile = async (index) => {
-    const fileName = files[index].name;
     try {
       await axios.delete(`${API}/api/deleteImage`, {
         headers: { Authorization: `Bearer ${token}` },
-        data: { keyword: "externalFiles" },
+        data: { keyword: deleteKeyword },
       });
 
       if (files[index].preview) URL.revokeObjectURL(files[index].preview);
@@ -146,12 +150,13 @@ const ServiceForm4 = () => {
       updatedFiles.splice(index, 1);
       setFiles(updatedFiles);
 
-      document.getElementById("file-upload").value = "";
+      toast.success("File deleted successfully");
     } catch (error) {
       console.error(
         "Error deleting file:",
         error.response?.data || error.message
       );
+      toast.error("Failed to delete file");
     }
   };
 

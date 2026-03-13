@@ -6,7 +6,7 @@ import { jwtDecode } from "jwt-decode";
 import { Data } from "../../Context/Store";
 
 const TeachingForm6 = () => {
- const API = import.meta.env.VITE_API
+  const API = import.meta.env.VITE_API;
   const token = localStorage.getItem("appraisal_token");
   const decoded = jwtDecode(token);
   const designation = decoded.designation;
@@ -21,6 +21,7 @@ const TeachingForm6 = () => {
   const [projectPublication, setProjectPublication] = useState("");
   const [none, setNone] = useState(true); // ✅ boolean instead of string
   const [files, setFiles] = useState([]);
+  const [deleteKeyword, setDeleteKeyword] = useState(null);
 
   // Refs
   const firstDropdownRef = useRef(null);
@@ -48,7 +49,7 @@ const TeachingForm6 = () => {
       const res = await axios.post(
         `${API}/api/publications/${designation}`,
         formData,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       setProjectPublication(res.data.finalMarks);
     } catch (err) {
@@ -82,7 +83,7 @@ const TeachingForm6 = () => {
       const res = await axios.post(
         `${API}/api/publications/${designation}`,
         formData,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       setProjectPublication(res.data.finalMarks);
     } catch (err) {
@@ -93,10 +94,16 @@ const TeachingForm6 = () => {
   // Handle click outside dropdowns
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (firstDropdownRef.current && !firstDropdownRef.current.contains(e.target)) {
+      if (
+        firstDropdownRef.current &&
+        !firstDropdownRef.current.contains(e.target)
+      ) {
         setFirstDropdown(false);
       }
-      if (secondDropdownRef.current && !secondDropdownRef.current.contains(e.target)) {
+      if (
+        secondDropdownRef.current &&
+        !secondDropdownRef.current.contains(e.target)
+      ) {
         setSecondDropdown(false);
       }
     };
@@ -140,7 +147,7 @@ const TeachingForm6 = () => {
 
       // Remove duplicates
       const uniqueFiles = sizeFilteredFiles.filter(
-        (file) => !files.some((f) => f.name === file.name)
+        (file) => !files.some((f) => f.name === file.name),
       );
       if (!uniqueFiles.length) {
         e.target.value = "";
@@ -173,8 +180,13 @@ const TeachingForm6 = () => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",
           },
-        }
+        },
       );
+
+      let url = res.data.files[0];
+      let fileDeleteKeyword = url.split("/").pop();
+      console.log("delete keyword : ", deleteKeyword);
+      setDeleteKeyword(fileDeleteKeyword);
 
       setProjectPublication(res.data.finalMarks);
       // toast.success("File uploaded successfully!");
@@ -193,7 +205,7 @@ const TeachingForm6 = () => {
     try {
       await axios.delete(`${API}/api/deleteImage`, {
         headers: { Authorization: `Bearer ${token}` },
-        data: { keyword: "studentProjectFiles" },
+        data: { keyword:  deleteKeyword},
       });
 
       if (files[index].preview) {
@@ -206,7 +218,10 @@ const TeachingForm6 = () => {
 
       // toast.success(`${decodeURIComponent(fileName)} deleted successfully`);
     } catch (error) {
-      console.error("Error deleting file:", error.response?.data || error.message);
+      console.error(
+        "Error deleting file:",
+        error.response?.data || error.message,
+      );
     }
   };
 
@@ -216,12 +231,14 @@ const TeachingForm6 = () => {
         {/* First Section */}
         <div className="first-container pr-3 border-r border-gray-400 col-span-10">
           <h1 className="text-lg font-medium">
-            6. Student Project and Publications <span className="text-red-500">*</span>
+            6. Student Project and Publications{" "}
+            <span className="text-red-500">*</span>
           </h1>
 
           {/* Project Guidance */}
           <h1 className="text-lg text-[#646464] font-medium mt-1">
-            1. U.G / P.G. Project Guidance - 1 Point (per Student/Max -2 Students)
+            1. U.G / P.G. Project Guidance - 1 Point (per Student/Max -2
+            Students)
           </h1>
           <div
             ref={firstDropdownRef}
@@ -233,7 +250,11 @@ const TeachingForm6 = () => {
                 none ? "bg-gray-100 text-gray-400 cursor-not-allowed" : ""
               }`}
             >
-              <h1>{projectGuidance !== null ? projectGuidance : "Number of projects"}</h1>
+              <h1>
+                {projectGuidance !== null
+                  ? projectGuidance
+                  : "Number of projects"}
+              </h1>
               <ChevronDown
                 className={`${firstDropdown ? "rotate-180" : "rotate-0"} transition-all duration-300`}
               />
@@ -255,7 +276,8 @@ const TeachingForm6 = () => {
 
           {/* Student Publication */}
           <h1 className="text-lg text-[#646464] font-medium mt-1">
-            2. Projects converted to Student Publication (Scopus/WoS) – 2 Points (per paper)
+            2. Projects converted to Student Publication (Scopus/WoS) – 2 Points
+            (per paper)
           </h1>
           <div
             ref={secondDropdownRef}
@@ -267,7 +289,11 @@ const TeachingForm6 = () => {
                 none ? "bg-gray-100 text-gray-400 cursor-not-allowed" : ""
               }`}
             >
-              <h1>{studentPublication !== null ? studentPublication : "Number of Publication"}</h1>
+              <h1>
+                {studentPublication !== null
+                  ? studentPublication
+                  : "Number of Publication"}
+              </h1>
               <ChevronDown
                 className={`${secondDropdown ? "rotate-180" : "rotate-0"} transition-all duration-300`}
               />
@@ -316,7 +342,8 @@ const TeachingForm6 = () => {
                   accept=".jpeg,.jpg,.png,.pdf,.doc,.docx"
                 />
                 <h1 className="text-sm mt-2 text-blue-400">
-                  Compress files into a single file. <span className="text-red-300">*</span>
+                  Compress files into a single file.{" "}
+                  <span className="text-red-300">*</span>
                 </h1>
                 <ToastContainer />
               </div>
@@ -329,7 +356,9 @@ const TeachingForm6 = () => {
                     className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded border"
                   >
                     <span className="text-sm text-gray-700">
-                      {fileObj.name.length > 25 ? fileObj.name.slice(0, 12) + "..." : fileObj.name}
+                      {fileObj.name.length > 25
+                        ? fileObj.name.slice(0, 12) + "..."
+                        : fileObj.name}
                     </span>
                     <button
                       onClick={() => removeFile(index)}
@@ -349,7 +378,9 @@ const TeachingForm6 = () => {
           <h1 className="text-lg font-medium">Marks</h1>
           <div className="h-[80%] flex items-center justify-center">
             <h1 className="text-[#646464] text-lg">
-              <span className="font-semibold text-[#318179]">{projectPublication || 0}</span>{" "}
+              <span className="font-semibold text-[#318179]">
+                {projectPublication || 0}
+              </span>{" "}
               out of {markData?.points?.projectPublication}
             </h1>
           </div>

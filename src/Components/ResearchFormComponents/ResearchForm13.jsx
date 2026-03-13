@@ -13,6 +13,7 @@ const ResearchForm13 = () => {
   // states
   const [selectedCheck, setSelectedCheck] = useState("No");
   const [files, setFiles] = useState([]);
+  const [deleteKeyword, setDeleteKeyword] = useState(null);
   const [mark, setMark] = useState(0);
   const [valueyesno, setvalueyesno] = useState("No")
   const { researchMarks } = useContext(Data)
@@ -81,48 +82,39 @@ const ResearchForm13 = () => {
           "Content-Type": "multipart/form-data",
         },
       });
-      console.log("Upload successful", response.data);
+      console.log("Upload successful:", response.data);
+      let url = response.data.files[0];
+      let fileDeleteKeyword = url.split("/").pop();
+      setDeleteKeyword(fileDeleteKeyword);
     } catch (err) {
       console.error("File upload failed:", err);
     }
   };
   const removeFile = async (index) => {
-    // const fileName = encodeURIComponent(files[index].name); // encode to handle spaces & special chars
-    const fileName = files[index].name;
-
     try {
-      // API call to delete image with fileName in URL
       await axios.delete(
         `${API}/api/deleteImage`,
         {
           headers: { Authorization: `Bearer ${token}` },
-           data: { keyword: "foreignFiles" }, 
+           data: { keyword: deleteKeyword }, 
         }
       );
 
-      // Revoke preview URL if exists
       if (files[index].preview) {
         URL.revokeObjectURL(files[index].preview);
       }
 
-      // Update state after successful deletion
       const updatedFiles = [...files];
       updatedFiles.splice(index, 1);
       setFiles(updatedFiles);
-      document.getElementById("file-upload").value = "";
-      // Clear error if limit is now fine
-      // if (updatedFiles.length < 1) {
-      //   setFileError("");
-      // }
 
-      // toast.success(`${decodeURIComponent(fileName)} deleted successfully`);
-      // toast.success(`${fileName} deleted successfully`);
+      toast.success("File deleted successfully");
     } catch (error) {
       console.error(
         "Error deleting file:",
         error.response?.data || error.message
       );
-      // toast.error("Failed to delete file");
+      toast.error("Failed to delete file");
     }
   };
 

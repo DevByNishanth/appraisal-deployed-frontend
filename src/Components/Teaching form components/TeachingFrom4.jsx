@@ -20,6 +20,7 @@ const TeachingFrom4 = () => {
   const [outOfMarks, setOutOfMarks] = useState({ teaching: 0 });
   const [developmentmark, setDevelopmentmark] = useState("");
   const [files, setFiles] = useState([]);
+  const [deleteKeyword, setDeleteKeyword] = useState(null);
 
   const allowedTypes = [
     "image/jpeg",
@@ -160,6 +161,9 @@ const TeachingFrom4 = () => {
       );
 
       console.log("Upload success:", res.data);
+      let url = res.data.files[0];
+      let fileDeleteKeyword = url.split("/").pop();
+      setDeleteKeyword(fileDeleteKeyword);
     } catch (err) {
       console.error("Upload failed:", err.response?.data || err.message);
     }
@@ -175,7 +179,7 @@ const TeachingFrom4 = () => {
       // API call to delete image with fileName in URL
       await axios.delete(`${API}/api/deleteImage`, {
         headers: { Authorization: `Bearer ${token}` },
-        data: { keyword: "Innovativefiles" },
+        data: { keyword: deleteKeyword },
       });
 
       // Revoke preview URL if exists

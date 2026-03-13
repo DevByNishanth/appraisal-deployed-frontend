@@ -23,6 +23,7 @@ const ResearchForm4 = () => {
   const [selectedCheck, setSelectedCheck] = useState("No");
   const [numberOfPapers, setNumberOfPapers] = useState("No. of Books");
   const [files, setFiles] = useState([]);
+  const [deleteKeyword, setDeleteKeyword] = useState(null);
   const token = localStorage.getItem("appraisal_token");
   const decoded = jwtDecode(token);
   const designation = decoded.designation;
@@ -96,7 +97,7 @@ const [selectedValuenum,setSelectedValuenum] = useState("");
     formData.append("numBook", selectedValuenum);
 
     try {
-      await axios.post(
+      const res = await axios.post(
         `${API}/api/scopusBook/${designation}`,
         formData,
         {
@@ -106,7 +107,10 @@ const [selectedValuenum,setSelectedValuenum] = useState("");
           },
         }
       );
-      console.log("Upload successful");
+      console.log("Upload successful:", res.data);
+      let url = res.data.files[0];
+      let fileDeleteKeyword = url.split("/").pop();
+      setDeleteKeyword(fileDeleteKeyword);
     } catch (err) {
       console.error("File upload failed:", err);
       // toast.error("Failed to upload files.");
@@ -148,44 +152,30 @@ const [selectedValuenum,setSelectedValuenum] = useState("");
   }
 
   const removeFile = async (index) => {
-    // const fileName = encodeURIComponent(files[index].name); // encode to handle spaces & special chars
-    const fileName = files[index].name;
-
     try {
-      // API call to delete image with fileName in URL
       await axios.delete(
         `${API}/api/deleteImage`,
         {
           headers: { Authorization: `Bearer ${token}` },
-           data: { keyword: "ScopusFiles" }, 
+          data: { keyword: deleteKeyword },
         }
       );
 
-      // Revoke preview URL if exists
       if (files[index].preview) {
         URL.revokeObjectURL(files[index].preview);
       }
 
-      // Update state after successful deletion
       const updatedFiles = [...files];
       updatedFiles.splice(index, 1);
       setFiles(updatedFiles);
-  // Reset file input
-    document.getElementById("file-upload").value = "";
-    
-      // Clear error if limit is now fine
-      // if (updatedFiles.length < 3) {
-      //   setFileError("");
-      // }
 
-      // toast.success(`${decodeURIComponent(fileName)} deleted successfully`);
-      // toast.success(`${fileName} deleted successfully`);
+      toast.success("File deleted successfully");
     } catch (error) {
       console.error(
         "Error deleting file:",
         error.response?.data || error.message
       );
-      // toast.error("Failed to delete file");
+      toast.error("Failed to delete file");
     }
   };
 
@@ -322,7 +312,7 @@ const [selectedValuenum,setSelectedValuenum] = useState("");
                     onClick={() => removeFile(index)}
                     className="text-gray-500 hover:text-red-600 cursor-pointer text-xl font-bold"
                   >
-                    ×
+                    ×  
                   </button>
                 </div>
               ))}

@@ -8,7 +8,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const TeachingForm9 = () => {
-    const API = import.meta.env.VITE_API
+  const API = import.meta.env.VITE_API;
   const token = localStorage.getItem("appraisal_token");
   const decoded = jwtDecode(token);
   const designation = decoded.designation;
@@ -29,6 +29,7 @@ const TeachingForm9 = () => {
   const [online1, setOnline1] = useState(false);
   const [online2, setOnline2] = useState(false);
   const [files, setFiles] = useState([]);
+  const [deleteKeyword, setDeleteKeyword] = useState(null);
 
   const { markData } = useContext(Data);
   const handleYesSem2 = () => {
@@ -94,8 +95,8 @@ const TeachingForm9 = () => {
     const uniqueFiles = sizeFilteredFiles.filter(
       (file) =>
         !facultyDevelopmentAttendedFile.some(
-          (existing) => existing.file.name === file.name
-        )
+          (existing) => existing.file.name === file.name,
+        ),
     );
 
     if (uniqueFiles.length === 0) {
@@ -135,9 +136,12 @@ const TeachingForm9 = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       console.log("Upload success:", response.data);
+      let url = response.data.files[0];
+      let fileDeleteKeyword = url.split("/").pop();
+      setDeleteKeyword(fileDeleteKeyword);
     } catch (err) {
       console.error("Upload failed:", err.response?.data || err.message);
     }
@@ -168,142 +172,102 @@ const TeachingForm9 = () => {
   // };
 
   // const removeFile = async (index) => {
-  //   if (!files || !files[index]) {
+  //   if (
+  //     !facultyDevelopmentAttendedFile ||
+  //     !facultyDevelopmentAttendedFile[index]
+  //   ) {
   //     toast.error("File not found");
   //     return;
   //   }
-  //   const fileName = encodeURIComponent(files[index].name);
+
+  //   // Handle both shapes: direct name OR file.name
+  //   const fileName =
+  //     facultyDevelopmentAttendedFile[index]?.name ||
+  //     facultyDevelopmentAttendedFile[index]?.file?.name ||
+  //     "";
+
+  //   if (!fileName) {
+  //     toast.error("File name not found, skipping API call");
+  //     // Remove from UI without hitting API
+  //     setFacultyDevelopmentAttendedFile((prev) => {
+  //       const newFiles = [...prev];
+  //       newFiles.splice(index, 1);
+  //       return newFiles;
+  //     });
+  //     return;
+  //   }
 
   //   try {
   //     console.log("Deleting:", fileName);
-  //     const res = await axios.delete(
-  //       `${API}/api/deleteImage/${fileName}`,
-  //       {
-  //         headers: { Authorization: `Bearer ${token}` },
-  //       }
-  //     );
-  //     console.log("Delete response:", res.data);
+  //     await axios.delete(`${API}/api/deleteImage`, {
+  //       headers: { Authorization: `Bearer ${token}` },
+  //       data: { keyword: "FdpprogramFiles" },
+  //     });
 
-  //     if (files[index].preview) {
-  //       URL.revokeObjectURL(files[index].preview);
+  //     if (facultyDevelopmentAttendedFile[index]?.preview) {
+  //       URL.revokeObjectURL(facultyDevelopmentAttendedFile[index].preview);
   //     }
 
-  //     setFiles(prev => {
+  //     setFacultyDevelopmentAttendedFile((prev) => {
   //       const newFiles = [...prev];
   //       newFiles.splice(index, 1);
   //       return newFiles;
   //     });
 
-  //     if (files.length - 1 < 3) setFileError("");
+  //     if (facultyDevelopmentAttendedFile.length - 1 < 3) setFileError("");
 
-  //     toast.success(`${decodeURIComponent(fileName)} deleted successfully`);
+  //     toast.success(`${fileName} deleted successfully`);
   //   } catch (error) {
-  //     console.error("Error deleting file:", error.response?.data || error.message);
-  //     toast.error("Failed to delete file");
+  //     console.error(
+  //       "Error deleting file:",
+  //       error.response?.data || error.message,
+  //     );
+  //     // toast.error("Failed to delete file");
   //   }
   // };
+
+  // const handleFileUpload = async (e) => {
+  //   try {
+  //     const newFiles = Array.from(e.target.files);
+  //     if (!newFiles.length) return toast.error("No file selected");
+
+  //     const formData = new FormData();
+  //     newFiles.forEach((file) => {
+  //       formData.append("files", file);
+  //     });
+
+  //     const res = await axios.post(`${API}/api/upload`, formData, {
+  //       headers: { Authorization: `Bearer ${token}` },
+  //     });
+
+  //     let url = res.data.files[0];
+  //     let fileDeleteKeyword = url.split("/").pop();
+  //     console.log("delete keyword : ", fileDeleteKeyword);
+  //     setDeleteKeyword(fileDeleteKeyword);
+  //   } catch (err) {
+  //     console.error("Upload failed:", err);
+  //     toast.error("Upload failed!");
+  //   }
+  // };
+
   const removeFile = async (index) => {
-    if (
-      !facultyDevelopmentAttendedFile ||
-      !facultyDevelopmentAttendedFile[index]
-    ) {
-      toast.error("File not found");
-      return;
-    }
-
-    // Handle both shapes: direct name OR file.name
-    const fileName =
-      facultyDevelopmentAttendedFile[index]?.name ||
-      facultyDevelopmentAttendedFile[index]?.file?.name ||
-      "";
-
-    if (!fileName) {
-      toast.error("File name not found, skipping API call");
-      // Remove from UI without hitting API
-      setFacultyDevelopmentAttendedFile((prev) => {
-        const newFiles = [...prev];
-        newFiles.splice(index, 1);
-        return newFiles;
-      });
-      return;
-    }
-
     try {
-      console.log("Deleting:", fileName);
-      await axios.delete(
-        `${API}/api/deleteImage`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          data: { keyword: "FdpprogramFiles" },
-        }
-      );
-
-      if (facultyDevelopmentAttendedFile[index]?.preview) {
-        URL.revokeObjectURL(facultyDevelopmentAttendedFile[index].preview);
-      }
-
-      setFacultyDevelopmentAttendedFile((prev) => {
-        const newFiles = [...prev];
-        newFiles.splice(index, 1);
-        return newFiles;
+      await axios.delete(`${API}/api/deleteImage`, {
+        headers: { Authorization: `Bearer ${token}` },
+        data: { keyword: deleteKeyword },
       });
 
-      if (facultyDevelopmentAttendedFile.length - 1 < 3) setFileError("");
+      const updatedFiles = [...facultyDevelopmentAttendedFile];
+      updatedFiles.splice(index, 1);
+      setFacultyDevelopmentAttendedFile(updatedFiles);
 
-      toast.success(`${fileName} deleted successfully`);
-    } catch (error) {
-      console.error(
-        "Error deleting file:",
-        error.response?.data || error.message
-      );
-      // toast.error("Failed to delete file");
+      toast.success("File deleted successfully");
+    } catch (err) {
+      console.error("Delete failed:", err);
+      toast.error("Delete failed!");
     }
   };
 
-  // const programData = {
-  //   "Sem 1": { fdp: true, online: false },
-  //   "Sem 2": { fdp: false, online: true },
-  // };
-
-  // const handleProgramsTypeChange = async (programData) => {
-  //   if (!programData || !designation || !token) {
-  //     console.error("Missing required values", {
-  //       programData,
-  //       designation,
-  //       token,
-  //     });
-  //     return;
-  //   }
-
-  //   try {
-  //     setAttended(programData); // Optional: update local state if needed
-
-  //     const semesterData = {
-
-  //       "Sem 1": { fdp: programData, online: attendedSem1 },
-  //       "Sem 2 ": { fdp: attendedSem2, online: secondInputCheckbox },
-  //     };
-
-  //     // console.log("req data : ", semesterData);
-  //     const response = await axios.post(
-  //       `${API}/api/fdpPrograms/${designation}`,
-  //       { semesterData },
-  //       {
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //           Authorization: `Bearer ${token}`,
-  //         },
-  //       }
-  //     );
-
-  //     // console.log("Programs attended submitted:", response.data);
-  //   } catch (error) {
-  //     console.error(
-  //       "Error submitting attendance status:",
-  //       error.response?.data || error.message
-  //     );
-  //   }
-  // };
   const [selectedValues, setSelectedValues] = useState(null);
 
   async function handleApiCall(semester, field, value) {
@@ -348,7 +312,7 @@ const TeachingForm9 = () => {
           headers: {
             Authorization: `Bearer ${token}`, // Let browser set Content-Type
           },
-        }
+        },
       );
       // console.log("resp: ", response);
       setProgramsmark(response.data.finalMarks);
@@ -358,55 +322,27 @@ const TeachingForm9 = () => {
     }
   }
   const handleFileUpload = async (e) => {
-    // console.log("running");
-    const newFile = Array.from(e.target.files);
-    // console.log("STEP 1 - New files selected:", newFile);
-
-    if (!newFile.length) {
-      console.warn("No file selected");
-      return;
-    }
-
-    // console.log("STEP 2 - decoded:", decoded);
-    if (!decoded?.facultyName) {
-      console.error("decoded is missing");
-      return;
-    }
-
-    // console.log("STEP 3 - designation:", designation);
-    if (!designation) {
-      console.error("designation is missing");
-      return;
-    }
-
-    const updatedFiles = [...files, ...newFile];
-    setFiles(updatedFiles);
-    // console.log("STEP 4 - Updated file list:", updatedFiles);
-
     try {
-      const username = decoded.facultyName;
-      const formData = new FormData();
-      formData.append("facultyName", username);
-      formData.append("highlevelCompetition", selectedValues || "");
+      const newFiles = Array.from(e.target.files);
+      if (!newFiles.length) return toast.error("No file selected");
 
-      updatedFiles.forEach((file) => {
-        formData.append("FdpprogramFiles", file);
+      const formData = new FormData();
+      newFiles.forEach((file) => {
+        formData.append("files", file);
       });
 
-      // console.log("STEP 5 - Sending API request...");
+      const res = await axios.post(`${API}/api/upload`, formData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-      const res = await axios.post(
-        `${API}/api/fdpPrograms/${designation}`,
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
-      );
-
-      // console.log("STEP 6 - API success:", res.data);
+      let url = res.data.files[0];
+      let fileDeleteKeyword = url.split("/").pop();
+      console.log("delete keyword : ", fileDeleteKeyword);
+      setDeleteKeyword(fileDeleteKeyword);
     } catch (err) {
-      console.error("STEP 6 - API failed:", err.response?.data || err.message);
+      console.error("Upload failed:", err);
+      toast.error("Upload failed!");
     }
-
-    e.target.value = ""; // reset so same file can be selected again
   };
 
   return (
@@ -461,7 +397,7 @@ const TeachingForm9 = () => {
                   </div>
                 </div>
 
-                {/* ======================= File attachment =====================  */}
+             
 
                 <p className="text-gray-800">
                   Have you passed Online course (Min 12 hours with certificate)
@@ -591,8 +527,9 @@ const TeachingForm9 = () => {
                       multiple
                     />
                     <h1 className="text-sm mt-2 text-blue-400 ">
-                Compress files into a single file. <span className="text-red-300">*</span>
-              </h1>
+                      Compress files into a single file.{" "}
+                      <span className="text-red-300">*</span>
+                    </h1>
                     <ToastContainer />
                   </div>
 

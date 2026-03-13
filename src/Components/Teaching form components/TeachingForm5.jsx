@@ -20,6 +20,7 @@ const TeachingForm5 = () => {
   const [guestLecturemark, setGuestLecturemark] = useState("");
   const [guest, setGuest] = useState();
   const [files, setFiles] = useState([]);
+  const [deleteKeyword, setDeleteKeyword] = useState(null);
 
   const allowedTypes = [
     "image/jpeg",
@@ -62,9 +63,12 @@ const TeachingForm5 = () => {
   //     // Remove the file from the array
   //     return prevFiles.filter((_, i) => i !== index);
   //   });
-  // };
+  // }
+  
 
-  const removeFile = async (index) => {
+
+  const removeFile = async (index, fieldFile) => {
+    console.log('hello running')
     const fileName = encodeURIComponent(files[index].name);
     console.log("indexcc", fileName); // encode to handle spaces & special chars
     console.log("index", index);
@@ -72,8 +76,11 @@ const TeachingForm5 = () => {
       // API call to delete image with fileName in URL
       await axios.delete(`${API}/api/deleteImage`, {
         headers: { Authorization: `Bearer ${token}` },
-        data: { keyword: "GuestLectureFiles" },
+        data: { keyword: deleteKeyword },
       });
+
+
+
 
       // Revoke preview URL if exists
       if (files[index].preview) {
@@ -203,6 +210,9 @@ const TeachingForm5 = () => {
       );
 
       console.log("Upload success:", res.data);
+      let url = res.data.files[0];
+      let fileDeleteKeyword = url.split("/").pop();
+      setDeleteKeyword(fileDeleteKeyword);
     } catch (err) {
       console.error("Upload failed:", err.response?.data || err.message);
     }
