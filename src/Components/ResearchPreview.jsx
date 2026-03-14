@@ -133,7 +133,7 @@ export default function ResearchPreview() {
                   "Papers Published in Scopus/Wos Indexed Book Chapters/Conference Proceedings",
                   previewmark?.record?.indexBook?.marks,
                 ],
-                // ["Patent Published ,Utility Patents Granted –,Design and others", previewmark?.record?.patent?.marks],
+                ["Patent Published ,Utility Patents Granted –,Design and others", previewmark?.record?.patent?.marks],
                 ["Increase in h - Index ", previewmark?.record?.hIndex?.marks],
                 [
                   "Increase in l 10 - Index",
