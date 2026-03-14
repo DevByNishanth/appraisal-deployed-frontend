@@ -12,7 +12,7 @@ const TeachingForm9_2 = () => {
   const [attendedSem2, setAttendedSem2] = useState("");
   const [filesSem1, setFilesSem1] = useState([]);
   const [filesSem2, setFilesSem2] = useState([]);
-    const [programsmark, setProgramsmark] = useState("");
+  const [deleteKeyword, setDeleteKeyword] = useState(null);
 
   const allowedTypes = [
     "image/jpeg",
@@ -59,6 +59,7 @@ const TeachingForm9_2 = () => {
     updated.splice(index, 1);
     setFilesSem2(updated);
   };
+
   const handleProgramstwoTypeChange = async (selectedValue) => {
     if (!selectedValue || !designation || !token) {
       console.error("Missing required values", {
@@ -80,15 +81,52 @@ const TeachingForm9_2 = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       // console.log("Programs attended submitted:", response.data);
     } catch (error) {
       console.error(
         "Error submitting attendance status:",
-        error.response?.data || error.message
+        error.response?.data || error.message,
       );
+    }
+  };
+
+  const handleFileUpload = async (e) => {
+    try {
+      const newFiles = Array.from(e.target.files);
+      if (!newFiles.length) return toast.error("No file selected");
+
+      const formData = new FormData();
+      newFiles.forEach((file) => {
+        formData.append("files", file);
+      });
+
+      const res = await axios.post(`${API}/api/upload`, formData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      let url = res.data.files[0];
+      let fileDeleteKeyword = url.split("/").pop();
+      console.log("delete keyword : ", fileDeleteKeyword);
+      setDeleteKeyword(fileDeleteKeyword);
+    } catch (err) {
+      console.error("Upload failed:", err);
+      toast.error("Upload failed!");
+    }
+  };
+
+  const removeFile = async () => {
+    try {
+      await axios.delete(`${API}/api/deleteImage`, {
+        headers: { Authorization: `Bearer ${token}` },
+        data: { keyword: deleteKeyword },
+      });
+      toast.success("File deleted successfully");
+    } catch (err) {
+      console.error("Delete failed:", err);
+      toast.error("Delete failed!");
     }
   };
 
@@ -98,7 +136,7 @@ const TeachingForm9_2 = () => {
         <div className="grid grid-cols-12 gap-4">
           <div className="col-span-10 pr-3 border-r border-gray-400">
             <h1 className="text-lg font-medium">
-             Online course passed (Min 12 hours with certificate).{" "}
+              Online course passed (Min 12 hours with certificate).{" "}
               <span className="text-red-500">*</span>
             </h1>
 
@@ -155,8 +193,9 @@ const TeachingForm9_2 = () => {
                       multiple
                     />
                     <h1 className="text-sm mt-2 text-blue-400 ">
-                Compress files into a single file. <span className="text-red-300">*</span>
-              </h1>
+                      Compress files into a single file.{" "}
+                      <span className="text-red-300">*</span>
+                    </h1>
                   </div>
 
                   <div className="mt-4 space-y-2 flex flex-col gap-2">
@@ -283,7 +322,10 @@ const TeachingForm9_2 = () => {
             <h1 className="text-lg font-medium">Marks</h1>
             <div className="h-[80%] flex items-center justify-center">
               <h1 className="text-[#646464] text-lg">
-                <span className="font-semibold text-[#318179]">{programsmark ||0}</span> out of 3
+                <span className="font-semibold text-[#318179]">
+                  {programsmark || 0}
+                </span>{" "}
+                out of 3
               </h1>
             </div>
           </div>

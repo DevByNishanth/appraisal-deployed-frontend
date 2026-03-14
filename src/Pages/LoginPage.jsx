@@ -7,6 +7,8 @@ import OtpForm from "../Components/OtpForm";
 import NewPasswordForm from "../Components/NewPasswordForm";
 import axios from "axios";
 import { Data } from "../Context/Store";
+import LoadingButton from "../Components/common/LoadingButton";
+
 
 const LoginPage = () => {
   const API = import.meta.env.VITE_API
@@ -237,19 +239,15 @@ const LoginPage = () => {
                     </a>
                   </div>
 
-                  <button
+
+                  <LoadingButton
                     onClick={handleLogin}
-                    disabled={isLoading}
-                    className={`w-full bg-[#0E8474]  flex items-center justify-center gap-4 text-white font-medium py-4 px-2 rounded-md transition-all duration-100 ${isLoading ? "cursor-not-allowed" : "cursor-pointer"
-                      }`}
+                    isLoading={isLoading}
+                    className="w-full bg-[#0E8474] text-white font-medium py-4 px-2 rounded-md transition-all duration-100"
                   >
-                    LOGIN{" "}
-                    {isLoading && (
-                      <span>
-                        <div className="loader"></div>
-                      </span>
-                    )}
-                  </button>
+                    LOGIN
+                  </LoadingButton>
+
                 </div>
               )}
 

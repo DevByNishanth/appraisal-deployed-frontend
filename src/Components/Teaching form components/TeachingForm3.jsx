@@ -18,7 +18,7 @@ const labelData = [
 // const { markData } = useContext(Data);
 
 const TeachingForm3 = () => {
-  const API = import.meta.env.VITE_API
+  const API = import.meta.env.VITE_API;
   //   Auth
   const token = localStorage.getItem("appraisal_token");
   const decoded = jwtDecode(token);
@@ -37,15 +37,15 @@ const TeachingForm3 = () => {
         {
           feedback: value,
           facultyName: username,
-        }, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      }
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
       );
 
       setFeedbackMark(response.data.finalMarks);
-
     } catch (error) {
       console.error("Error submitting teaching percentage:", error);
     }
@@ -58,7 +58,7 @@ const TeachingForm3 = () => {
           <div className="first-container pr-3 border-r border-gray-400 col-span-10">
             <div>
               <h1 className="text-lg font-medium">
-                 The average student feedback for all Theory / Lab classes
+                The average student feedback for all Theory / Lab classes
                 <span className="text-red-500">*</span>
               </h1>
               <h1 className="text-lg text-[#646464] font-medium text-[16px] mt-1">
@@ -95,8 +95,11 @@ const TeachingForm3 = () => {
             <h1 className="text-lg font-medium">Marks</h1>
             <div className="h-[80%] flex items-center justify-center">
               <h1 className="text-[#646464] text-lg">
-                <span className="font-semibold text-[#318179]">{feedbackMark || 0}</span> out of{" "}
-                {/* {markData?.points?.guest} */}{3}
+                <span className="font-semibold text-[#318179]">
+                  {feedbackMark || 0}
+                </span>{" "}
+                out of {/* {markData?.points?.guest} */}
+                {3}
               </h1>
             </div>
           </div>

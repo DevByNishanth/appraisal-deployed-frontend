@@ -34,7 +34,7 @@ const outOfMarks = {
 };
 
 const TeachingForm = () => {
- const API = import.meta.env.VITE_API
+  const API = import.meta.env.VITE_API;
   // const value =
   // auth
   const token = localStorage.getItem("appraisal_token");
@@ -50,6 +50,9 @@ const TeachingForm = () => {
 
   const [subjectslist, setSubjectslist] = useState([]);
   console.log(subjectslist);
+
+  // teaching form files
+  const [deleteKeyword, setDeleteKeyword] = useState(null);
 
   const [isTeachingAssgingment, setIsTeachingAssignment] = useState(false);
   const [teachingAssignmentFile, setTeachingAssignmentFile] = useState([]);
@@ -131,7 +134,7 @@ const TeachingForm = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       // Update marks after API call
@@ -174,7 +177,7 @@ const TeachingForm = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       setTeashigresmark(response.data.finalMarks);
@@ -196,7 +199,7 @@ const TeachingForm = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       setTeachpermark(response.data.finalMarks);
@@ -223,7 +226,7 @@ const TeachingForm = () => {
     } catch (error) {
       console.error(
         "Error submitting teaching percentage:",
-        error.response?.data || error.message
+        error.response?.data || error.message,
       );
     }
   };
@@ -279,7 +282,7 @@ const TeachingForm = () => {
     }
 
     const uniqueFiles = sizeFilteredFiles.filter(
-      (file) => !files.some((existingFile) => existingFile.name === file.name)
+      (file) => !files.some((existingFile) => existingFile.name === file.name),
     );
     if (uniqueFiles.length === 0) {
       toast.error("These files are already added.");
@@ -309,9 +312,20 @@ const TeachingForm = () => {
 
     // 9️⃣ Send to backend
     try {
-      await axios.post(`${API}/api/teaching/${designation}`, formData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.post(
+        `${API}/api/teaching/${designation}`,
+        formData,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+
+      // setFile1(res.data.files[0]);
+      const url = res.data.files[0];
+      const firstFileKeyword = url.split("/").pop();
+      setDeleteKeyword(firstFileKeyword);
+
+      console.log("file from request : ", res);
     } catch (err) {
       console.error("File upload failed:", err);
       toast.error("Failed to upload files.");
@@ -339,13 +353,13 @@ const TeachingForm = () => {
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
 
         setOutOfMarks(pointsResponse.data);
 
         const teachingData = pointsResponse.data.find(
-          (item) => item.category === "teaching"
+          (item) => item.category === "teaching",
         );
         const teachingAssignment =
           teachingData?.points?.teachingAssignment || 0;
@@ -357,7 +371,7 @@ const TeachingForm = () => {
         setStudentFeedbackmark(studentFeedback);
         localStorage.setItem(
           "appraisal_outofmark",
-          JSON.stringify(teachingData)
+          JSON.stringify(teachingData),
         );
 
         setMarkData(teachingData);
@@ -375,7 +389,7 @@ const TeachingForm = () => {
       } catch (error) {
         console.error(
           "Error in fetching data:",
-          error.response?.data || error.message
+          error.response?.data || error.message,
         );
         window.alert("Something went wrong while fetching data.");
       }
@@ -394,13 +408,18 @@ const TeachingForm = () => {
   //   });
   // };
 
+  useEffect(() => {
+    console.log("files : ", files);
+  }, [files]);
+
   const removeFile = async (index) => {
     const fileName = files[index].name;
 
     try {
-      // API call to delete image with fileName in URL
-      await axios.delete(`${API}/api/deleteImage/${fileName}`, {
+      // API call to delete image using the keyword in request body
+      await axios.delete(`${API}/api/deleteImage`, {
         headers: { Authorization: `Bearer ${token}` },
+        data: { keyword: deleteKeyword },
       });
 
       // Revoke preview URL if exists
@@ -422,7 +441,7 @@ const TeachingForm = () => {
     } catch (error) {
       console.error(
         "Error deleting file:",
-        error.response?.data || error.message
+        error.response?.data || error.message,
       );
       // toast.error("Failed to delete file");
     }
@@ -492,11 +511,10 @@ const TeachingForm = () => {
 
                             handleInputChange(index, "subjectCode", value);
                           }}
-                          className={`border ${
-                            errors[index]
+                          className={`border ${errors[index]
                               ? "border-red-500"
                               : "border-[#AAAAAA]"
-                          } bg-white focus:outline-1 outline-[#3ab5a3] focus:border-none rounded-md px-2 py-2 w-full`}
+                            } bg-white focus:outline-1 outline-[#3ab5a3] focus:border-none rounded-md px-2 py-2 w-full`}
                         />
                       </div>
                       {/* ✅ Show error below input */}
@@ -558,9 +576,8 @@ const TeachingForm = () => {
 
                         handleInputChange(index, "subjectName", value);
                       }}
-                      className={`border w-full ${
-                        errorsone[index] ? "border-red-500" : "border-[#AAAAAA]"
-                      } rounded-md px-2 py-2 focus:outline-1 outline-[#3ab5a3] focus:border-none`}
+                      className={`border w-full ${errorsone[index] ? "border-red-500" : "border-[#AAAAAA]"
+                        } rounded-md px-2 py-2 focus:outline-1 outline-[#3ab5a3] focus:border-none`}
                     />
                     {errorsone[index] && (
                       <p className="text-red-500 text-xs mt-1">
@@ -581,7 +598,7 @@ const TeachingForm = () => {
                       <option value="1">1</option>
                       <option value="2">2</option>
                       <option value="3">3</option>
-                      <option value="4">4 </option>
+                      {/* <option value="4">4 </option>  */}
                     </select>
                   </div>
                 </div>

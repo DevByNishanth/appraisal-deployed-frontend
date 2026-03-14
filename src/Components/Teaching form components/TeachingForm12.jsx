@@ -34,6 +34,7 @@ const TeachingForm12 = () => {
 
   const { markData } = useContext(Data);
   const [files, setFiles] = useState([]);
+  const [deleteKeyword, setDeleteKeyword] = useState(null);
 
   const allowedTypes = [
     "image/jpeg",
@@ -68,7 +69,7 @@ const TeachingForm12 = () => {
       // API call to delete image with fileName in URL
       await axios.delete(`${API}/api/deleteImage`, {
         headers: { Authorization: `Bearer ${token}` },
-        data: { keyword: "valueAdditionFiles" },
+        data: { keyword: deleteKeyword },
       });
 
       // Revoke preview URL if exists
@@ -184,6 +185,9 @@ const TeachingForm12 = () => {
         }
       );
       console.log("Upload successful", res.data);
+      let url = res.data.files[0];
+      let fileDeleteKeyword = url.split("/").pop();
+      setDeleteKeyword(fileDeleteKeyword);
     } catch (err) {
       console.error("File upload failed:", err.response?.data || err.message);
     } finally {

@@ -31,6 +31,7 @@ const ResearchForm1 = () => {
   console.log("selectedCheck", selectedCheck);
   const [numberOfPapers, setNumberOfPapers] = useState("No. of Papers");
   const [files, setFiles] = useState([]);
+  const [deleteKeyword, setDeleteKeyword] = useState(null);
   const [remarkData, setRemarkData] = useState("");
   const [fileError, setFileError] = useState("");
   const [sciemark, setSciemark] = useState("");
@@ -105,7 +106,7 @@ const ResearchForm1 = () => {
     formData.append("scie", JSON.stringify(inputGroups));
 
     try {
-      await axios.post(
+      const res = await axios.post(
         `${API}/api/scie/${designation}`,
         formData,
         {
@@ -115,7 +116,10 @@ const ResearchForm1 = () => {
           },
         }
       );
-      console.log("Upload successful");
+      console.log("Upload successful:", res.data);
+      let url = res.data.files[0];
+      let fileDeleteKeyword = url.split("/").pop();
+      setDeleteKeyword(fileDeleteKeyword);
     } catch (err) {
       console.error("File upload failed:", err.response || err);
     } finally {
@@ -157,42 +161,30 @@ const ResearchForm1 = () => {
   }
 
   const removeFile = async (index) => {
-    // const fileName = encodeURIComponent(files[index].name); // encode to handle spaces & special chars
-    const fileName = files[index].name;
-
     try {
-      // API call to delete image with fileName in URL
       await axios.delete(
         `${API}/api/deleteImage`,
         {
           headers: { Authorization: `Bearer ${token}` },
-           data: { keyword: "sciePaperFiles" }, 
+          data: { keyword: deleteKeyword },
         }
       );
 
-      // Revoke preview URL if exists
       if (files[index].preview) {
         URL.revokeObjectURL(files[index].preview);
       }
 
-      // Update state after successful deletion
       const updatedFiles = [...files];
       updatedFiles.splice(index, 1);
       setFiles(updatedFiles);
 
-      // Clear error if limit is now fine
-      // if (updatedFiles.length < 3) {
-      //   setFileError("");
-      // }
-
-      // toast.success(`${decodeURIComponent(fileName)} deleted successfully`);
-      // toast.success(`${fileName} deleted successfully`);
+      toast.success("File deleted successfully");
     } catch (error) {
       console.error(
         "Error deleting file:",
         error.response?.data || error.message
       );
-      // toast.error("Failed to delete file");
+      toast.error("Failed to delete file");
     }
   };
   useEffect(() => {

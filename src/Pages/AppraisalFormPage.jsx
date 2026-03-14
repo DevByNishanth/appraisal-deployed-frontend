@@ -69,14 +69,12 @@ const AppraisalFormPage = () => {
   );
 
   useEffect(() => {
-    console.log("run");
     axios
       .get(`${API}/api/employee/${emp_id}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {
         setIsSubmitted(res.data.formStatus);
-        console.log("user data : ", res.data);
       });
   }, []);
 
@@ -180,7 +178,7 @@ const AppraisalFormPage = () => {
 
   return (
     <>
-      {isSubmitted !== "Pending" ? (
+      {isSubmitted.toLowerCase() !== "pending" ? (
         <div className="thanks-page-container mt-4">
           <div className="text-center flex justify-center ">
             <div>

@@ -4,11 +4,11 @@ import { UploadCloud } from "lucide-react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import { Data } from "../../Context/Store";
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const TeachingForm7 = () => {
-    const API = import.meta.env.VITE_API
+  const API = import.meta.env.VITE_API;
   const [facultyDevlopmentFile, setFacultyDevlopmentFile] = useState([]);
   const token = localStorage.getItem("appraisal_token");
   const decoded = jwtDecode(token);
@@ -19,6 +19,7 @@ const TeachingForm7 = () => {
   const [lakhsTypemark, setLakhsTypemark] = useState("");
   const { markData } = useContext(Data);
   const [files, setFiles] = useState([]);
+  const [deleteKeyword, setDeleteKeyword] = useState(null);
 
   const allowedTypes = [
     "image/jpeg",
@@ -52,51 +53,51 @@ const TeachingForm7 = () => {
     }));
     setFacultyDevlopmentFile((prev) => [...prev, ...filePreviews]);
   };
-//   const removeFile = (index) => {
-//   setFiles((prevFiles) => {
-//     // Revoke preview URL if it exists to avoid memory leaks
-//     if (prevFiles[index]?.preview) {
-//       URL.revokeObjectURL(prevFiles[index].preview);
-//     }
-//     // Remove the file from the array
-//     return prevFiles.filter((_, i) => i !== index);
-//   });
-// };
+  //   const removeFile = (index) => {
+  //   setFiles((prevFiles) => {
+  //     // Revoke preview URL if it exists to avoid memory leaks
+  //     if (prevFiles[index]?.preview) {
+  //       URL.revokeObjectURL(prevFiles[index].preview);
+  //     }
+  //     // Remove the file from the array
+  //     return prevFiles.filter((_, i) => i !== index);
+  //   });
+  // };
 
   const removeFile = async (index) => {
-  const fileName = encodeURIComponent(files[index].name); // encode to handle spaces & special chars
+    const fileName = encodeURIComponent(files[index].name); // encode to handle spaces & special chars
 
-  try {
-    // API call to delete image with fileName in URL
-    await axios.delete(
-      `${API}/api/deleteImage`,
-      {
+    try {
+      // API call to delete image with fileName in URL
+      await axios.delete(`${API}/api/deleteImage`, {
         headers: { Authorization: `Bearer ${token}` },
-        data: { keyword: "FdpFunding" },
+        data: { keyword: deleteKeyword },
+      });
+
+      // Revoke preview URL if exists
+      if (files[index].preview) {
+        URL.revokeObjectURL(files[index].preview);
       }
-    );
 
-    // Revoke preview URL if exists
-    if (files[index].preview) {
-      URL.revokeObjectURL(files[index].preview);
+      // Update state after successful deletion
+      const updatedFiles = [...files];
+      updatedFiles.splice(index, 1);
+      setFiles(updatedFiles);
+
+      // Clear error if limit is now fine
+      if (updatedFiles.length < 3) {
+        setFileError("");
+      }
+
+      toast.success(`${decodeURIComponent(fileName)} deleted successfully`);
+    } catch (error) {
+      console.error(
+        "Error deleting file:",
+        error.response?.data || error.message,
+      );
+      // toast.error("Failed to delete file");
     }
-
-    // Update state after successful deletion
-    const updatedFiles = [...files];
-    updatedFiles.splice(index, 1);
-    setFiles(updatedFiles);
-
-    // Clear error if limit is now fine
-    if (updatedFiles.length < 3) {
-      setFileError("");
-    }
-
-    toast.success(`${decodeURIComponent(fileName)} deleted successfully`);
-  } catch (error) {
-    console.error("Error deleting file:", error.response?.data || error.message);
-    // toast.error("Failed to delete file");
-  }
-};
+  };
   const [selectedValues, setSelectedValues] = useState(null);
   const handleLakhsTypeChange = async (value) => {
     try {
@@ -111,7 +112,7 @@ const TeachingForm7 = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       // // console.log("Funding amount submitted:", response.data);
@@ -119,94 +120,104 @@ const TeachingForm7 = () => {
     } catch (error) {
       console.error(
         "Error submitting funding amount:",
-        error.response?.data || error.message
+        error.response?.data || error.message,
       );
     }
   };
-const handleFileUpload = async (e) => {
-  const newFiles = Array.from(e.target.files); // Files just selected
+  const handleFileUpload = async (e) => {
+    try {
+      const newFiles = Array.from(e.target.files); // Files just selected
 
-  if (!newFiles.length) {
-    console.warn("No file selected");
-    return;
-  }
+      if (!newFiles.length) {
+        console.warn("No file selected");
+        return;
+      }
 
-  // 1️⃣ File size check (max 2 MB)
-  const sizeFilteredFiles = newFiles.filter((file) => {
-    if (file.size > 1 * 1024 * 1024) {
-      toast.error(`${file.name} is larger than 1 MB`);
-      return false;
+      // 1️⃣ File size check (max 2 MB)
+      const sizeFilteredFiles = newFiles.filter((file) => {
+        if (file.size > 1 * 1024 * 1024) {
+          toast.error(`${file.name} is larger than 1 MB`);
+          return false;
+        }
+        return true;
+      });
+
+      if (sizeFilteredFiles.length === 0) {
+        e.target.value = "";
+        return;
+      }
+
+      // 2️⃣ Max files limit check (max 3 total)
+      if (files.length + sizeFilteredFiles.length > 1) {
+        toast.error("You can only upload a maximum of 1 files.");
+        e.target.value = "";
+        return;
+      }
+
+      // 3️⃣ Remove duplicates by file name
+      const uniqueFiles = sizeFilteredFiles.filter(
+        (file) =>
+          !files.some((existingFile) => existingFile.name === file.name),
+      );
+
+      if (uniqueFiles.length === 0) {
+        e.target.value = "";
+        return;
+      }
+
+      // 4️⃣ Required data checks
+      if (!decoded?.facultyName) {
+        console.error("decoded is missing");
+        return;
+      }
+      if (!designation) {
+        console.error("designation is missing");
+        return;
+      }
+
+      // 5️⃣ Update state
+      const updatedFiles = [...files, ...uniqueFiles];
+      setFiles(updatedFiles);
+
+      // 6️⃣ Prepare FormData
+      try {
+        console.log("selected val : ", selectedValue);
+        const formData = new FormData();
+        formData.append("facultyName", decoded.facultyName);
+        formData.append("FdpFunding", selectedValue || "");
+
+        updatedFiles.forEach((file) => {
+          formData.append("FdpFunding", file);
+        });
+
+        // 7️⃣ Send API request
+        const res = await axios.post(
+          `${API}/api/fdpFunding/${designation}`,
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "multipart/form-data",
+            },
+          },
+        );
+
+        console.log("Upload success:", res.data);
+        let url = res.data.files[0];
+        let fileDeleteKeyword = url.split("/").pop();
+        setDeleteKeyword(fileDeleteKeyword);
+      } catch (err) {
+        console.error("Upload failed:", err.response?.data || err.message);
+      }
+
+      // 8️⃣ Reset input
+      e.target.value = "";
+    } catch (err) {
+      console.error("Upload failed:", err);
+      toast.error("Upload failed!");
     }
-    return true;
-  });
+  };
 
-  if (sizeFilteredFiles.length === 0) {
-    e.target.value = "";
-    return;
-  }
-
-  // 2️⃣ Max files limit check (max 3 total)
-  if (files.length + sizeFilteredFiles.length > 1) {
-    toast.error("You can only upload a maximum of 1 files.");
-    e.target.value = "";
-    return;
-  }
-
-  // 3️⃣ Remove duplicates by file name
-  const uniqueFiles = sizeFilteredFiles.filter(
-    (file) => !files.some((existingFile) => existingFile.name === file.name)
-  );
-
-  if (uniqueFiles.length === 0) {
-    e.target.value = "";
-    return;
-  }
-
-  // 4️⃣ Required data checks
-  if (!decoded?.facultyName) {
-    console.error("decoded is missing");
-    return;
-  }
-  if (!designation) {
-    console.error("designation is missing");
-    return;
-  }
-
-  // 5️⃣ Update state
-  const updatedFiles = [...files, ...uniqueFiles];
-  setFiles(updatedFiles);
-
-  // 6️⃣ Prepare FormData
-  try {
-    console.log("selected val : ", selectedValue)
-    const formData = new FormData();
-    formData.append("facultyName", decoded.facultyName);
-    formData.append("FdpFunding", selectedValue || "");
-
-    updatedFiles.forEach((file) => {
-      formData.append("FdpFunding", file);
-    });
-
-    // 7️⃣ Send API request
-    const res = await axios.post(
-      `${API}/api/fdpFunding/${designation}`,
-      formData,
-        { headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },}
-    );
-
-    console.log("Upload success:", res.data);
-  } catch (err) {
-    console.error("Upload failed:", err.response?.data || err.message);
-  }
-
-  // 8️⃣ Reset input
-  e.target.value = "";
-};
-
- 
   return (
     <>
       <div className="main-container border p-5 border-[#AAAAAA] bg-white rounded-xl ">
@@ -214,8 +225,8 @@ const handleFileUpload = async (e) => {
           <div className="first-container pr-3 border-r border-gray-400 col-span-10">
             <div>
               <h1 className="text-lg font-medium">
-                Organizing Faculty Development Programs, Seminars, Workshops
-                and Conferences with funding.
+                Organizing Faculty Development Programs, Seminars, Workshops and
+                Conferences with funding.
                 <span className="text-red-500">*</span>
               </h1>
             </div>
@@ -235,7 +246,7 @@ const handleFileUpload = async (e) => {
                 />
                 <label className="text-gray-500">&lt; 1 Lakh</label>
               </div>
-                  {console.log("selected value : ", selectedValue)}
+              {console.log("selected value : ", selectedValue)}
               <div className="input-1 flex items-center gap-2">
                 <input
                   type="radio"
@@ -273,9 +284,7 @@ const handleFileUpload = async (e) => {
                   name="studentfeedbackg"
                   value="None"
                   className="scale-125 accent-teal-400 cursor-pointer"
-                  checked={
-                    selectedValue == "None" ? true : false
-                  }
+                  checked={selectedValue == "None" ? true : false}
                   onChange={(e) => {
                     setSelectedValue("None");
                     handleLakhsTypeChange("None");
@@ -309,9 +318,10 @@ const handleFileUpload = async (e) => {
                   multiple
                 />
                 <h1 className="text-sm mt-2 text-blue-400 ">
-                Compress files into a single file. <span className="text-red-300">*</span>
-              </h1>
-                 <ToastContainer />
+                  Compress files into a single file.{" "}
+                  <span className="text-red-300">*</span>
+                </h1>
+                <ToastContainer />
               </div>
 
               <div className="mt-4 space-y-2  flex items-start gap-2">

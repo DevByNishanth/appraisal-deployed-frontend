@@ -18,6 +18,7 @@ const TeachingForm13 = () => {
   const [selectedRoles, setSelectedRoles] = useState([]);
   const { markData } = useContext(Data);
   const [files, setFiles] = useState([]);
+  const [deleteKeyword, setDeleteKeyword] = useState(null);
 
   const allowedTypes = [
     "image/jpeg",
@@ -80,6 +81,9 @@ const TeachingForm13 = () => {
         }
       );
       console.log("Upload successful", res.data);
+      let url = res.data.files[0];
+      let fileDeleteKeyword = url.split("/").pop();
+      setDeleteKeyword(fileDeleteKeyword);
     } catch (err) {
       console.error("File upload failed:", err.response || err);
     } finally {
@@ -95,7 +99,7 @@ const TeachingForm13 = () => {
       // API call to delete image with fileName in URL
       await axios.delete(`${API}/api/deleteImage`, {
         headers: { Authorization: `Bearer ${token}` },
-        data: { keyword: "files" },
+        data: { keyword: deleteKeyword },
       });
 
       // Revoke preview URL if exists

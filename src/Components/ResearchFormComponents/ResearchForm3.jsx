@@ -14,7 +14,7 @@ import { Data } from "../../Context/Store";
 import { ToastContainer, toast } from "react-toastify";
 const ResearchForm3 = () => {
   const { researchMarks } = useContext(Data);
-  const API = import.meta.env.VITE_API
+  const API = import.meta.env.VITE_API;
   const token = localStorage.getItem("appraisal_token");
   const decoded = jwtDecode(token);
   const designation = decoded.designation;
@@ -24,12 +24,12 @@ const ResearchForm3 = () => {
 
   const { remarkData } = useContext(Data);
 
-
   // states
   const [isDropDown, setDropdown] = useState(false);
   const [selectedCheck, setSelectedCheck] = useState("No");
   const [numberOfPapers, setNumberOfPapers] = useState("No. of Papers");
   const [files, setFiles] = useState([]);
+  const [deleteKeyword, setDeleteKeyword] = useState(null);
   const [fileError, setFileError] = useState("");
   const [inputGroups, setInputGroups] = useState([
     { author: "", typeOfAuthor: "" },
@@ -95,17 +95,16 @@ const ResearchForm3 = () => {
     formData.append("aicte", JSON.stringify(inputGroups));
 
     try {
-      await axios.post(
-        `${API}/api/aicte/${designation}`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-      console.log("Upload successful");
+      const res = await axios.post(`${API}/api/aicte/${designation}`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      console.log("Upload successful:", res.data);
+      let url = res.data.files[0];
+      let fileDeleteKeyword = url.split("/").pop();
+      setDeleteKeyword(fileDeleteKeyword);
     } catch (err) {
       console.error("File upload failed:", err);
       // toast.error("Failed to upload files.");
@@ -128,9 +127,8 @@ const ResearchForm3 = () => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",
           },
-        }
+        },
       );
-
 
       setAictemark(res.data.finalMarks);
 
@@ -148,46 +146,30 @@ const ResearchForm3 = () => {
   }
 
   const removeFile = async (index) => {
-    // const fileName = encodeURIComponent(files[index].name); // encode to handle spaces & special chars
-    const fileName = files[index].name;
-
     try {
-      // API call to delete image with fileName in URL
       await axios.delete(
         `${API}/api/deleteImage`,
-        
-
-       {
+        {
           headers: { Authorization: `Bearer ${token}` },
-           data: { keyword: "AicteFiles" }, 
-        }
+          data: { keyword: deleteKeyword },
+        },
       );
 
-      // Revoke preview URL if exists
       if (files[index].preview) {
         URL.revokeObjectURL(files[index].preview);
       }
 
-      // Update state after successful deletion
       const updatedFiles = [...files];
       updatedFiles.splice(index, 1);
       setFiles(updatedFiles);
-        // Reset file input
-    document.getElementById("file-upload").value = "";
 
-      // // Clear error if limit is now fine
-      // if (updatedFiles.length < 3) {
-      //   setFileError("");
-      // }
-
-      // toast.success(`${decodeURIComponent(fileName)} deleted successfully`);
-      // toast.success(`${fileName} deleted successfully`);
+      toast.success("File deleted successfully");
     } catch (error) {
       console.error(
         "Error deleting file:",
-        error.response?.data || error.message
+        error.response?.data || error.message,
       );
-      // toast.error("Failed to delete file");
+      toast.error("Failed to delete file");
     }
   };
   const [error, setError] = useState(false);
@@ -210,7 +192,7 @@ const ResearchForm3 = () => {
             {/* .heading / question  */}
             <div>
               <h1 className="text-lg font-medium">
-                 Papers Published in AICTE / UGC Care List Indexed Journals{" "}
+                Papers Published in AICTE / UGC Care List Indexed Journals{" "}
                 <span className="text-red-500">*</span>
               </h1>
             </div>
@@ -342,7 +324,8 @@ const ResearchForm3 = () => {
                     multiple
                   />
                   <h1 className="text-sm mt-2 text-blue-400 ">
-                    Compress files into a single file. <span className="text-red-300">*</span>
+                    Compress files into a single file.{" "}
+                    <span className="text-red-300">*</span>
                   </h1>
                   <ToastContainer />
                 </div>
@@ -353,6 +336,7 @@ const ResearchForm3 = () => {
                       key={index}
                       className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded border"
                     >
+                      {console.log("files : ", files)}
                       <div className="flex items-center gap-3">
                         {fileObj.preview ? (
                           <img

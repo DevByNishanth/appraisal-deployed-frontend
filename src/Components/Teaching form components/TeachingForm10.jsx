@@ -8,7 +8,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const TeachingForm10 = () => {
-  const API = import.meta.env.VITE_API
+  const API = import.meta.env.VITE_API;
   const token = localStorage.getItem("appraisal_token");
   const decoded = jwtDecode(token);
   const designation = decoded.designation;
@@ -19,6 +19,7 @@ const TeachingForm10 = () => {
   const [mouSigned, setMouSigned] = useState([]);
   const [mouSignedmark, setMouSignedmark] = useState("");
   const [yesNo, setYesNo] = useState("No");
+  const [deleteKeyword, setDeleteKeyword] = useState(null);
   const { markData } = useContext(Data);
   const [facultyDevelopmentAttendedFile, setFacultyDevelopmentAttendedFile] =
     useState([]);
@@ -81,7 +82,7 @@ const TeachingForm10 = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       // console.log("Industry involvement submitted:", response.data);
@@ -89,154 +90,82 @@ const TeachingForm10 = () => {
     } catch (error) {
       console.error(
         "Error submitting industry involvement:",
-        error.response?.data || error.message
+        error.response?.data || error.message,
       );
     }
   };
 
-  async function handleFileUpload(e) {
-    const newFiles = Array.from(e.target.files); // Files just selected
-
-    // 1️⃣ No file selected
-    if (!newFiles.length) {
-      console.warn("No file selected");
-      return;
-    }
-
-    // 2️⃣ File size check (max 2 MB)
-    const sizeFilteredFiles = newFiles.filter((file) => {
-      if (file.size > 1 * 1024 * 1024) {
-        toast.error(`${file.name} is larger than 1 MB`);
-        return false;
-      }
-      return true;
-    });
-
-    if (sizeFilteredFiles.length === 0) {
-      e.target.value = "";
-      return;
-    }
-
-    // 3️⃣ Max files limit check (max 3)
-    if (files.length + sizeFilteredFiles.length > 1) {
-      toast.error("You can only upload a maximum of 1 files.");
-      e.target.value = "";
-      return;
-    }
-
-    // 4️⃣ Remove duplicates based on file name
-    const uniqueFiles = sizeFilteredFiles.filter(
-      (file) => !files.some((existingFile) => existingFile.name === file.name)
-    );
-
-    if (uniqueFiles.length === 0) {
-      e.target.value = "";
-      return;
-    }
-
-    // 5️⃣ Update file list
-    const updatedFiles = [...files, ...uniqueFiles];
-    setFiles(updatedFiles);
-
-    // 6️⃣ Prepare FormData
-    const formData = new FormData();
-    formData.append("industryInvolvement", yesNo);
-
-    if (!decoded?.facultyName) {
-      console.error("Faculty name is missing");
-      return;
-    }
-    formData.append("facultyName", decoded.facultyName);
-
-    updatedFiles.forEach((file) => {
-      formData.append("IndustryFiles", file);
-    });
-
-    // 7️⃣ API request
+  const handleFileUpload = async (e) => {
     try {
-      const response = await axios.post(
+      const newFiles = Array.from(e.target.files);
+      if (!newFiles.length) return toast.error("No file selected");
+
+      const formData = new FormData();
+      newFiles.forEach((file) => {
+        formData.append("IndustryFiles", file);
+      });
+      formData.append("facultyName", username);
+      formData.append("industryInvolvement", yesNo);
+      formData.append("designation", designation);
+
+      const res = await axios.post(
         `${API}/api/industryInvolvement/${designation}`,
         formData,
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
           },
-        }
+        },
       );
 
-      setMouSignedmark(response.data.finalMarks);
+      let url = res.data.files[0];
+      let fileDeleteKeyword = url.split("/").pop();
+      setDeleteKeyword(fileDeleteKeyword);
+      setMouSignedmark(res.data.finalMarks);
+
+      // Update local files state for UI display
+      const filePreviews = newFiles.map((file) => ({
+        name: file.name,
+        preview: file.type.startsWith("image/")
+          ? URL.createObjectURL(file)
+          : null,
+      }));
+      setFiles(filePreviews);
+
+      // toast.success("File uploaded successfully!");
+    } catch (err) {
+      console.error("Upload failed:", err.response?.data || err.message);
+      toast.error("Upload failed!");
+    } finally {
+      e.target.value = "";
+    }
+  };
+
+  const removeFile = async (index) => {
+    try {
+      await axios.delete(`${API}/api/deleteImage`, {
+        headers: { Authorization: `Bearer ${token}` },
+        data: { keyword: deleteKeyword },
+      });
+
+      if (files[index]?.preview) {
+        URL.revokeObjectURL(files[index].preview);
+      }
+
+      const updatedFiles = [...files];
+      updatedFiles.splice(index, 1);
+      setFiles(updatedFiles);
+
+      toast.success("File deleted successfully");
     } catch (error) {
       console.error(
-        "Error submitting industry involvement:",
-        error.response?.data || error.message
+        "Error deleting file:",
+        error.response?.data || error.message,
       );
-    }
-
-    // 8️⃣ Reset input so same file can be re-selected
-    e.target.value = "";
-  }
-  // const removeFile = (index) => {
-  //   setFiles((prevFiles) => {
-  //     // Revoke preview URL if it exists to avoid memory leaks
-  //     if (prevFiles[index]?.preview) {
-  //       URL.revokeObjectURL(prevFiles[index].preview);
-  //     }
-  //     // Remove the file from the array
-  //     return prevFiles.filter((_, i) => i !== index);
-  //   });
-  // };
-
-  // console.log("=========================== my files ====> : ", files);
-  const removeFile = async (index) => {
-    if (!files || !files[index]) {
-      toast.error("File not found");
-      return;
-    }
-
-    const fileName = encodeURIComponent(files[index].name);
-
-    try {
-      const res = await axios.delete(
-        `${API}/api/deleteImage`,
-        { headers: { Authorization: `Bearer ${token}` },
-      data: { keyword: "IndustryFiles" }, }
-      );
-
-      console.log("Response status:", res.status);
-      console.log("Response data:", res.data);
-
-      // ✅ Normal success
-      handleFileRemoval(index, decodeURIComponent(fileName));
-    } catch (error) {
-      const msg = error.response?.data?.message;
-      console.log("Error status:", error.response?.status, "Message:", msg);
-
-      if (msg === "File deleted successfully") {
-        // ✅ Treat non-200 "success" as actual success
-        handleFileRemoval(index, decodeURIComponent(fileName));
-      } else {
-        // toast.error("Failed to delete file");
-      }
+      toast.error("Failed to delete file");
     }
   };
-
-  // Helper to remove file from state & show toast
-  const handleFileRemoval = (index, fileName) => {
-    if (files[index]?.preview) {
-      URL.revokeObjectURL(files[index].preview);
-    }
-
-    setFiles(prev => {
-      const updated = [...prev];
-      updated.splice(index, 1);
-      return updated;
-    });
-
-    if (files.length - 1 < 3) setFileError("");
-
-    toast.success(`${fileName} deleted successfully`);
-  };
-
 
   return (
     <>
@@ -245,9 +174,9 @@ const TeachingForm10 = () => {
           <div className="first-container pr-3 border-r border-gray-400 col-span-10">
             <div>
               <h1 className="text-lg font-medium">
-                 MoU Signed with Industries / Establishment of a Laboratory
-                in Collaboration with an Industry / Involvement in CoE
-                activities. <span className="text-red-500">*</span>
+                MoU Signed with Industries / Establishment of a Laboratory in
+                Collaboration with an Industry / Involvement in CoE activities.{" "}
+                <span className="text-red-500">*</span>
               </h1>
             </div>
             <div
@@ -305,8 +234,9 @@ const TeachingForm10 = () => {
                     multiple
                   />
                   <h1 className="text-sm mt-2 text-blue-400 ">
-                Compress files into a single file. <span className="text-red-300">*</span>
-              </h1>
+                    Compress files into a single file.{" "}
+                    <span className="text-red-300">*</span>
+                  </h1>
                   <ToastContainer />
                 </div>
 
