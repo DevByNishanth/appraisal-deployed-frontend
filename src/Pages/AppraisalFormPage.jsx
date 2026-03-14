@@ -159,7 +159,7 @@ const AppraisalFormPage = () => {
           },
           {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
+              Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
             },
           }
@@ -173,8 +173,12 @@ const AppraisalFormPage = () => {
         console.error("Error fetching data:", error.message);
       }
     };
-    fetchData();
-  }, []);
+    
+    // Refetch the marks automatically when the submission status changes
+    if (isSubmitted && isSubmitted.toLowerCase() !== "pending") {
+      fetchData();
+    }
+  }, [isSubmitted, API, username, designation, token]);
 
   return (
     <>
